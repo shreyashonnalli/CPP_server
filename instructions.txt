@@ -1,0 +1,8 @@
+Make sure you have CMake and Boost to run. Compile using below steps
+
+1. make directory build - 'mkdir build'
+2. cd to build - 'cd build'
+3. cmake the project - 'cmake ..'
+4. build the project - 'cmake --build .'
+5. run the project with desired arguments e.g. - './server 5001 /usr/output.txt'
+6. examples of singular client is given (warning: very messy) which provides two requests to a server.

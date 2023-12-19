@@ -1,3 +1,23 @@
+--Testing--
+
+Mostly done manually due to lack of time and trying to get a working solution.
+
+--Architectural decisions--
+
+Used an unordered_map with pair<row,col> as key to store the grid. Each unique row col val corresponds to a value in the matrix. Impossible to store the grid on most systems and would be very sparse. Hence a sparse matrix approach with a map is better.
+
+Even though TCP requests may come out of order (such as example given in pdf), the actual threads will be executed in order by the client handlers. Synchronisation is achieved this way.
+
+I implemented my server to close threads as soon as they reached end of function. Closing the server was done by using combination of timeout and number of active threads. This was because of 2 reasons -
+- "You can assume there is no packet loss during the game. If you receive a request with Sequence Number N, there must be requests with sequence number 1 to (N-1) from one of the clients"
+- "The game concludes when all the clients are disconnected from the server."
+    This tells us that after all clients disconnect there is always a natural number of the sequences and there are no gaps. Hence with my implementation, number of active threads will always be 0 when a game could be finished.
+    But still a game may not be finished and a new client may request with seqNum N+1 even if all previous sequences 1 to N are satisfied.
+    An appropriate wait time is 20 seconds. If no new client connections in 20 seconds. Assume game is finished and clean up.
+
+
+--Compilation Steps--
+
 Make sure you have CMake and Boost to run. Compile using below steps
 
 1. make directory build - 'mkdir build'

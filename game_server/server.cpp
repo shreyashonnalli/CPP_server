@@ -4,7 +4,7 @@ GameServer::GameServer(int port, std::string writeLoc) : PORT(port), serverSocke
 {
     currentSequenceNum = 1;
     setupServer();
-    //std::thread(&GameServer::asyncTest, this).detach();
+    std::thread(&GameServer::asyncTest, this).detach();
     startThreadPool();
     startThreadPoolDestroyer();
 }
@@ -117,21 +117,23 @@ int GameServer::getNextClientSocket(){
 
 void GameServer::joinAllThreads(){
     for (auto& thread : clientHandlerThreads) {
-        if (thread.joinable()) {
-            std::cout << "Thread joined: " << thread.get_id() << std::endl;
-            thread.join();
-        }
+        if (thread.joinable()) thread.join();
     }
 }
 
 void GameServer::joinOnlyFinishedThreads(){
-    auto it = clientHandlerThreads.begin();
-    while (it != clientHandlerThreads.end()) {
-        if (it->joinable()) {
-            it->join();
-            it = clientHandlerThreads.erase(it);
-        } else {
-            ++it;
+    for (int i = 0; i < clientHandlers.size(); i++) {
+        if (!clientHandlers[i]->isCompleted()) {
+            std::cout << "Thread " << i << " is not completed yet. Continue with execution." << std::endl;
+        }
+        else {
+            std::cout << "Thread " << i << " is completed. Deleting this..." << std::endl;
+            if (clientHandlerThreads[i].joinable()){
+                clientHandlerThreads[i].join();
+                clientHandlerThreads.erase(clientHandlerThreads.begin() + i);
+                clientHandlers.erase(clientHandlers.begin() + i);
+                i--;
+            }
         }
     }
 }
@@ -141,15 +143,20 @@ void GameServer::startThreadPoolDestroyer() {
     writeGridToFile();
     grid_.emptySparseMatrix();
     currentSequenceNum = 1;
+    clientHandlerThreads.clear();
 }
 
 void GameServer::startThreadPool() {
     while(true){
         int clientSocket = getNextClientSocket();
         if (clientHandlerThreads.size() < MAX_CONNECTIONS){
-            clientHandlerThreads.emplace_back(&ClientHandler::run, new ClientHandler(*this, clientSocket));
+            auto clientHandler = std::make_unique<ClientHandler>(*this, clientSocket);
+            
+            clientHandlers.push_back(std::move(clientHandler));
+            clientHandlerThreads.emplace_back(&ClientHandler::run, clientHandlers.back().get());
         }
-//        joinOnlyFinishedThreads();
+        joinOnlyFinishedThreads();
+        grid_.printMatrix();
     }
 }
 

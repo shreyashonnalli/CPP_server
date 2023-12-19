@@ -10,6 +10,7 @@
 #include <arpa/inet.h>
 #include <string>
 #include <sstream>
+#include <future>
 
 class ClientInputHandler {
 public:

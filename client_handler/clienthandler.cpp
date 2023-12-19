@@ -3,29 +3,31 @@
 
 ClientHandler::ClientHandler(GameServer& server, int clientSocket)
     : parentServer(server), clientSocket(clientSocket){
-//        struct timeval tv;
-//        tv.tv_sec = 1;
-//        tv.tv_usec = 0;
-//        setsockopt(clientSocket, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof tv);
-        memset(buffer, '\0', sizeof(buffer));
 }
 
 ClientHandler::~ClientHandler(){}
+
+void ClientHandler::resetBuffer(){
+    memset(buffer, '\0', sizeof(buffer));
+}
 
 void ClientHandler::sendMessage(const char *message){
     // Send message to the client
     if (send(clientSocket, message, strlen(message), 0) == -1) perror("Error sending data");
 }
 
-int ClientHandler::readMessage() {
-    
+bool ClientHandler::pollSocket() {
     struct pollfd fd;
     int ret;
     fd.fd = clientSocket;
     fd.events = POLLIN;
-    if (poll(&fd, 1, 1000) <= 0) return -1;
-    
-    memset(buffer, '\0', sizeof(buffer));
+    if (poll(&fd, 1, 1000) <= 0) return false;
+    else return true;
+}
+
+int ClientHandler::readMessage() {
+    if (!pollSocket()) return -1;
+    resetBuffer();
     read(clientSocket, buffer, sizeof(buffer) - 1);
     if (inputHandler.validateClientInput(buffer) == false)
     {
@@ -41,12 +43,16 @@ bool ClientHandler::sequenceNumberSynchronised(){
 
 void ClientHandler::proceedWithProtocol() {
     sequenceNumber = inputHandler.getSeqNum();
-    //wait for previous sequences to finish incase this has arrived earlier
-    while(!sequenceNumberSynchronised()){
-        std::cout << sequenceNumber << parentServer.getCurrentSequenceNumber() << "-";
-        sleep(1);
+    
+    //new game has started
+    if (sequenceNumber < parentServer.getCurrentSequenceNumber()){
+        
+        return;
     }
-    std::cout << parentServer.getCurrentSequenceNumber() << " server's curr sequence number\n";
+    
+    //wait for previous sequences to finish incase this has arrived earlier
+    while(!sequenceNumberSynchronised()){}
+    
     if (inputHandler.isRead(buffer)) readProtocol();
     else writeProtocol();
     parentServer.updateCurrentSequenceNumber();
@@ -54,8 +60,8 @@ void ClientHandler::proceedWithProtocol() {
 
 void ClientHandler::readProtocol() {
     std::string matrixResponse = parentServer.getGrid().readFromGrid(inputHandler.getRowCoord(),
-                                            inputHandler.getColCoord(),
-                                            inputHandler.getDirection());
+                                                                    inputHandler.getColCoord(),
+                                                                    inputHandler.getDirection());
     sendMessage(matrixResponse.c_str());
 }
 
@@ -79,7 +85,14 @@ void ClientHandler::closeSocket() {
 void ClientHandler::run() {
     while(readMessage() != -1)
         proceedWithProtocol();
-    
-    std::cout << "closing connection having seqNum " << sequenceNumber <<", from thread id " << std::this_thread::get_id() << std::endl;
+//    std::cout << "closing connection having seqNum " << sequenceNumber <<", from thread id " << std::this_thread::get_id() << std::endl;
     closeSocket();
+    
+    promise.set_value();
 }
+
+
+bool ClientHandler::isCompleted() {
+    return future.wait_for(std::chrono::milliseconds(100)) == std::future_status::ready;
+}
+

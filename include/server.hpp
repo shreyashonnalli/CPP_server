@@ -48,6 +48,8 @@ private:
     
     //thread pool of clientHandlers
     std::vector<std::thread> clientHandlerThreads;
+    std::vector<std::unique_ptr<ClientHandler>> clientHandlers;
+    
     std::string writeLocation;
     SparseMatrix grid_;
     uint64_t currentSequenceNum;

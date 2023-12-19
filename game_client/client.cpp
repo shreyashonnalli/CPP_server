@@ -9,10 +9,11 @@
 
 int main(int argc, char *argv[])
 {
-    if (argc < 3)
+    if (argc < 4)
     {
         std::cerr << "Usage: " << argv[0] << " <seqNum>"
-                  << " <seqNum>" << std::endl;
+                  << " <seqNum>"
+                  << " <InputWrite>" << std::endl;
         return 1;
     }
     int clientSocket;
@@ -21,6 +22,7 @@ int main(int argc, char *argv[])
 
     int seqNum = std::stoi(argv[1]);
     int seqNum2 = std::stoi(argv[2]);
+    std::string write(argv[3]);
 
     clientSocket = socket(AF_INET, SOCK_STREAM, 0);
     if (clientSocket == -1)
@@ -50,14 +52,14 @@ int main(int argc, char *argv[])
 
     std::cout << "Connected to the server." << std::endl;
 
-    std::string message = "WRITE," + std::to_string(seqNum) + ",0,0,+Y,annnnnnnnnnn,END";
+    std::string message = "WRITE," + std::to_string(seqNum) + ",0,0,+Y," + write + ",END";
     send(clientSocket, message.c_str(), message.length(), 0);
 
     memset(buffer, '\0', sizeof(buffer));
     read(clientSocket, buffer, sizeof(buffer) - 1);
     std::cout << "From Server: " << buffer << std::endl;
 
-    std::string message2 = "WRITE," + std::to_string(seqNum2) + ",0,0,+Y,annnnnnnnnnn,END";
+    std::string message2 = "WRITE," + std::to_string(seqNum2) + ",0,0,+Y," + write + ",END";
     send(clientSocket, message2.c_str(), message2.length(), 0);
 
     memset(buffer, '\0', sizeof(buffer));

@@ -23,12 +23,19 @@ public:
     ~ClientHandler();
     void run();
     
+    bool isCompleted();
+    
 private:
     ClientInputHandler inputHandler;
     GameServer& parentServer;
     int clientSocket;
     uint64_t sequenceNumber;
     char buffer[1024 + 1];
+    
+    std::promise<void> promise;
+    std::future<void> future{promise.get_future()};
+    bool pollSocket();
+    void resetBuffer();
     
     void closeSocket();
     

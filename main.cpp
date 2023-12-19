@@ -14,6 +14,8 @@ int main(int argc, char *argv[])
 
     int port = std::stoi(argv[1]);
     std::string fileLoc(argv[2]);
+
+    // server runs forever
     GameServer server(5001, fileLoc);
     return 0;
 }

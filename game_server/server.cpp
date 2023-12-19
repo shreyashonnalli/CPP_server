@@ -4,7 +4,16 @@ GameServer::GameServer(int port, std::string writeLoc) : PORT(port), serverSocke
 {
     currentSequenceNum = 1;
     setupServer();
+    //std::thread(&GameServer::asyncTest, this).detach();
     startThreadPool();
+    startThreadPoolDestroyer();
+}
+
+void GameServer::asyncTest(){
+    while(true){
+        std::cout << clientHandlerThreads.size() << " ";
+        sleep(1);
+    }
 }
 
 GameServer::~GameServer()
@@ -106,20 +115,50 @@ int GameServer::getNextClientSocket(){
     return clientSocket;
 }
 
+void GameServer::joinAllThreads(){
+    for (auto& thread : clientHandlerThreads) {
+        if (thread.joinable()) {
+            std::cout << "Thread joined: " << thread.get_id() << std::endl;
+            thread.join();
+        }
+    }
+}
+
+void GameServer::joinOnlyFinishedThreads(){
+    auto it = clientHandlerThreads.begin();
+    while (it != clientHandlerThreads.end()) {
+        if (it->joinable()) {
+            it->join();
+            it = clientHandlerThreads.erase(it);
+        } else {
+            ++it;
+        }
+    }
+}
+
+void GameServer::startThreadPoolDestroyer() {
+    joinAllThreads();
+    writeGridToFile();
+    grid_.emptySparseMatrix();
+    currentSequenceNum = 1;
+}
 
 void GameServer::startThreadPool() {
     while(true){
         int clientSocket = getNextClientSocket();
-        ClientHandler clientHandler(*this, clientSocket);
         if (clientHandlerThreads.size() < MAX_CONNECTIONS){
-//            std::cout << clientHandlerThreads.size() << "\n";
-            clientHandlerThreads.emplace_back(&ClientHandler::run, &clientHandler);
+            clientHandlerThreads.emplace_back(&ClientHandler::run, new ClientHandler(*this, clientSocket));
         }
-        else{
-            std::cerr << "Thread Pool is full. Connection Rejected." << std::endl;
-            break;
-        }
+//        joinOnlyFinishedThreads();
     }
+}
+
+bool GameServer::allThreadsJoinable() {
+    for (auto& thread : clientHandlerThreads) {
+        if (!thread.joinable()) return false;
+    }
+    if (clientHandlerThreads.size() < 1) return false;
+    else return true;
 }
 
 

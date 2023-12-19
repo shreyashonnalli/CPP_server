@@ -52,7 +52,7 @@ private:
     SparseMatrix grid_;
     uint64_t currentSequenceNum;
     
-    
+    void asyncTest();
     
     
     //server initialization methods
@@ -65,6 +65,10 @@ private:
     int getNextClientSocket();
     
     void startThreadPool();
+    void joinAllThreads();
+    void joinOnlyFinishedThreads();
+    void startThreadPoolDestroyer();
+    bool allThreadsJoinable();
 };
 
 #endif /* server_hpp */

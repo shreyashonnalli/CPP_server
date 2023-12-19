@@ -140,3 +140,7 @@ std::pair<uint32_t, uint32_t> SparseMatrix::getKey(uint32_t row, uint32_t col){
 std::unordered_map<std::pair<uint32_t, uint32_t>, char, boost::hash<std::pair<uint32_t, uint32_t>>> SparseMatrix::getSparseMatrix() {
     return matrix_;
 }
+
+void SparseMatrix::emptySparseMatrix(){
+    matrix_.clear();
+}

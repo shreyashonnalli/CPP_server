@@ -42,8 +42,11 @@ bool ClientHandler::sequenceNumberSynchronised(){
 void ClientHandler::proceedWithProtocol() {
     sequenceNumber = inputHandler.getSeqNum();
     //wait for previous sequences to finish incase this has arrived earlier
-    while(!sequenceNumberSynchronised()){}
-    std::cout << parentServer.getCurrentSequenceNumber() << "\n";
+    while(!sequenceNumberSynchronised()){
+        std::cout << sequenceNumber << parentServer.getCurrentSequenceNumber() << "-";
+        sleep(1);
+    }
+    std::cout << parentServer.getCurrentSequenceNumber() << " server's curr sequence number\n";
     if (inputHandler.isRead(buffer)) readProtocol();
     else writeProtocol();
     parentServer.updateCurrentSequenceNumber();
@@ -74,9 +77,9 @@ void ClientHandler::closeSocket() {
 }
 
 void ClientHandler::run() {
-    while(readMessage() != -1) proceedWithProtocol();
-//    if (readMessage() == -1) return;
-//    proceedWithProtocol();
+    while(readMessage() != -1)
+        proceedWithProtocol();
+    
     std::cout << "closing connection having seqNum " << sequenceNumber <<", from thread id " << std::this_thread::get_id() << std::endl;
     closeSocket();
 }

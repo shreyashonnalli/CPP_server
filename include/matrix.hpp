@@ -22,6 +22,8 @@ public:
         boost::hash<std::pair<uint32_t, uint32_t>>
     > getSparseMatrix();
     
+    void emptySparseMatrix();
+    
     friend std::ostream &operator<<(std::ostream &os, const SparseMatrix & matrix);
     
 private:

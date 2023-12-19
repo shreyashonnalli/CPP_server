@@ -6,6 +6,8 @@
 
 int main(int argc, char *argv[])
 {
-    GameServer server(5001, "/Users/shreyashonnalli/Desktop/flowtraders/output.txt");
+    while(true){
+        GameServer server(5001, "/Users/shreyashonnalli/Desktop/flowtraders/output.txt");
+    }
     return 0;
 }

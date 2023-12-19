@@ -1,7 +1,3 @@
---Testing--
-
-Mostly done manually due to lack of time and trying to get a working solution.
-
 --Architectural decisions--
 
 Used an unordered_map with pair<row,col> as key to store the grid. Each unique row col val corresponds to a value in the matrix. Impossible to store the grid on most systems and would be very sparse. Hence a sparse matrix approach with a map is better.
@@ -26,3 +22,8 @@ Make sure you have CMake and Boost to run. Compile using below steps
 4. build the project - 'cmake --build .'
 5. run the project with desired arguments e.g. - './server 5001 /usr/output.txt'
 6. examples of singular client is given (warning: very messy) which provides two requests to a server.
+
+--Testing--
+5. Assuming you have done steps 1 to 4 of above, type in './tester'
+
+Done mostly manually due to inexperience with boost testing library and trying to get a working solution in time. Usually use gtest. Automated testing of Data Structure.

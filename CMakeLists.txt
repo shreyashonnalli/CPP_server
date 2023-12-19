@@ -9,6 +9,8 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(Boost REQUIRED)
+find_package(Boost COMPONENTS unit_test_framework REQUIRED)
+
 include_directories("${Boost_INCLUDE_DIRS}")
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -16,6 +18,10 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 add_library(matrix_library data_structure/matrix.cpp include/matrix.hpp)
 add_library(clientinput_handler client_input_handler/clientinputhandler.cpp include/clientinputhandler.hpp)
 add_library(clienthandler client_handler/clienthandler.cpp include/clienthandler.hpp include/server.hpp)
+
+
+add_executable(tester tests/tester.cpp)
+target_link_libraries(tester Boost::unit_test_framework matrix_library)
 
 add_executable(server main.cpp game_server/server.cpp include/server.hpp)
 target_link_libraries(server matrix_library clientinput_handler clienthandler)
@@ -27,3 +33,4 @@ target_include_directories(server PUBLIC include)
 target_include_directories(client PUBLIC include)
 target_include_directories(clientinput_handler PUBLIC include)
 target_include_directories(clienthandler PUBLIC include)
+target_include_directories(tester PUBLIC include)

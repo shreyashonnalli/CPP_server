@@ -69,7 +69,9 @@ void ClientHandler::proceedWithProtocol()
         readProtocol();
     else
         writeProtocol();
+    parentServer.writeMutex.lock();
     parentServer.updateCurrentSequenceNumber();
+    parentServer.writeMutex.unlock();
 }
 
 // protocol to read.

@@ -28,6 +28,8 @@ constexpr uint64_t MAX_CONNECTIONS = std::numeric_limits<uint64_t>::max();
 class GameServer
 {
 public:
+    std::mutex writeMutex;
+    
     GameServer(int port, std::string writeLoc);
     ~GameServer();
 
@@ -46,14 +48,8 @@ private:
     
     //thread pool of clientHandlers
     std::vector<std::thread> clientHandlerThreads;
-    
     std::string writeLocation;
-    
-    
     SparseMatrix grid_;
-    
-    
-    //maybe
     uint64_t currentSequenceNum;
     
     

@@ -41,9 +41,17 @@ int main()
 
     std::cout << "Connected to the server." << std::endl;
 
-    // const char *message = "WRITE,1,0,0,+Y,annnnnnnnnnn,END";
-    const char *message = "READ,2,0,0,+Y,END";
+    const char *message = "WRITE,1,0,0,+Y,annnnnnnnnnn,END";
+    // const char *message = "WRITE,3,0,0,+Y,lolol,END";
     send(clientSocket, message, strlen(message), 0);
+
+    memset(buffer, '\0', sizeof(buffer));
+    read(clientSocket, buffer, sizeof(buffer) - 1);
+    std::cout << "From Server: " << buffer << std::endl;
+
+    const char *message2 = "READ,2,0,0,+Y,END";
+    // const char *message2 = "READ,4,0,0,+Y,END";
+    send(clientSocket, message2, strlen(message2), 0);
 
     memset(buffer, '\0', sizeof(buffer));
     read(clientSocket, buffer, sizeof(buffer) - 1);

@@ -112,7 +112,7 @@ void GameServer::startThreadPool() {
         int clientSocket = getNextClientSocket();
         ClientHandler clientHandler(*this, clientSocket);
         if (clientHandlerThreads.size() < MAX_CONNECTIONS){
-            std::cout << clientHandlerThreads.size() << "\n";
+//            std::cout << clientHandlerThreads.size() << "\n";
             clientHandlerThreads.emplace_back(&ClientHandler::run, &clientHandler);
         }
         else{

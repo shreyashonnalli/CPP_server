@@ -12,6 +12,8 @@
 #include <sstream>
 #include "clientinputhandler.hpp"
 #include <thread>
+#include <poll.h>
+
 
 class GameServer;
 
@@ -27,7 +29,6 @@ private:
     int clientSocket;
     uint64_t sequenceNumber;
     char buffer[1024 + 1];
-    std::mutex writeMutex;
     
     void closeSocket();
     

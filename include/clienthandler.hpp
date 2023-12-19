@@ -22,7 +22,6 @@ public:
     ClientHandler(GameServer& server, int clientSocket);
     ~ClientHandler();
     void run();
-    
     bool isCompleted();
     
 private:

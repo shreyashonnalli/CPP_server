@@ -4,13 +4,20 @@ GameServer::GameServer(int port, std::string writeLoc) : PORT(port), serverSocke
 {
     currentSequenceNum = 1;
     setupServer();
-    std::thread(&GameServer::asyncTest, this).detach();
-    startThreadPool();
-    startThreadPoolDestroyer();
+    //    std::thread(&GameServer::asyncTest, this).detach();
+    while (true)
+    {
+        std::cout << std::endl
+                  << "Started new game" << std::endl;
+        startThreadPool();
+        startThreadPoolDestroyer();
+    }
 }
 
-void GameServer::asyncTest(){
-    while(true){
+void GameServer::asyncTest()
+{
+    while (true)
+    {
         std::cout << clientHandlerThreads.size() << " ";
         sleep(1);
     }
@@ -18,10 +25,7 @@ void GameServer::asyncTest(){
 
 GameServer::~GameServer()
 {
-    close(serverSocket);
-    for(auto& thread: clientHandlerThreads) {
-        thread.join();
-    }
+    startThreadPoolDestroyer();
 }
 
 void GameServer::createSocket()
@@ -75,6 +79,9 @@ void GameServer::setupServer()
 
 void GameServer::writeGridToFile()
 {
+    std::cout << "Writing to file" << std::endl
+              << std::endl;
+
     std::ofstream outputFile(writeLocation, std::ios::out | std::ios::app);
 
     if (outputFile.is_open())
@@ -88,47 +95,91 @@ void GameServer::writeGridToFile()
     }
 }
 
-SparseMatrix GameServer::getGrid(){
+SparseMatrix GameServer::getGrid()
+{
     return grid_;
 }
 
-void GameServer::setGrid(SparseMatrix grid){
+void GameServer::setGrid(SparseMatrix grid)
+{
     grid_ = grid;
 }
 
-
-uint64_t GameServer::getCurrentSequenceNumber(){
+uint64_t GameServer::getCurrentSequenceNumber()
+{
     return currentSequenceNum;
 }
 
-
-void GameServer::updateCurrentSequenceNumber(){
+void GameServer::updateCurrentSequenceNumber()
+{
     currentSequenceNum++;
 }
 
+// blocking method.
+// If there are active threads in the program, means the session isn't finished and waits indefinitely.
+// If no active threads in the program, session might be finished, waits 20 secs before saying gaming session is finished.
+int GameServer::getNextClientSocket()
+{
+    fd_set readSet;
+    FD_ZERO(&readSet);
+    FD_SET(serverSocket, &readSet);
 
-int GameServer::getNextClientSocket(){
+    struct timeval timeout;
+    timeout.tv_sec = 20;
+    timeout.tv_usec = 0;
+
+    if (clientHandlerThreads.size() == 0)
+    {
+        int result = select(serverSocket + 1, &readSet, nullptr, nullptr, &timeout);
+        if (result == -1)
+            std::exit(-1);
+        else if (result == 0)
+            return -1;
+    }
+
     int clientSocket = accept(serverSocket, nullptr, nullptr);
-    if (clientSocket == -1) {
+    if (clientSocket == -1)
+    {
         std::exit(-1);
     }
     return clientSocket;
 }
 
-void GameServer::joinAllThreads(){
-    for (auto& thread : clientHandlerThreads) {
-        if (thread.joinable()) thread.join();
+// Join all active threads in case there are any
+void GameServer::joinAllThreads()
+{
+    auto it = clientHandlerThreads.begin();
+    while (it != clientHandlerThreads.end())
+    {
+        if (it->joinable())
+        {
+            it->join();
+            it = clientHandlerThreads.erase(it);
+            // Erase corresponding element in clientHandlers
+            auto index = std::distance(clientHandlerThreads.begin(), it);
+            clientHandlers.erase(clientHandlers.begin() + index);
+        }
+        else
+        {
+            ++it;
+        }
     }
 }
 
-void GameServer::joinOnlyFinishedThreads(){
-    for (int i = 0; i < clientHandlers.size(); i++) {
-        if (!clientHandlers[i]->isCompleted()) {
-            std::cout << "Thread " << i << " is not completed yet. Continue with execution." << std::endl;
+// Loops through all running threads and if its completed, then joins them.
+void GameServer::joinOnlyFinishedThreads()
+{
+    for (int i = 0; i < clientHandlers.size(); i++)
+    {
+        if (!clientHandlers[i]->isCompleted())
+        {
+            std::cout << "A Thread is not completed yet. Keeping this in the pool." << std::endl;
         }
-        else {
-            std::cout << "Thread " << i << " is completed. Deleting this..." << std::endl;
-            if (clientHandlerThreads[i].joinable()){
+        else
+        {
+            std::cout << "A Thread is completed. Deleting this." << std::endl;
+            if (clientHandlerThreads[i].joinable())
+            {
                 clientHandlerThreads[i].join();
                 clientHandlerThreads.erase(clientHandlerThreads.begin() + i);
                 clientHandlers.erase(clientHandlers.begin() + i);
@@ -136,36 +187,35 @@ void GameServer::joinOnlyFinishedThreads(){
             }
         }
     }
+    std::cout << "Number of threads in pool is now " << clientHandlers.size() << std::endl;
 }
 
-void GameServer::startThreadPoolDestroyer() {
-    joinAllThreads();
+// Bit like a destructor but instead resets the entire server.
+void GameServer::startThreadPoolDestroyer()
+{
+    if (clientHandlers.size() > 0)
+        joinAllThreads();
     writeGridToFile();
     grid_.emptySparseMatrix();
     currentSequenceNum = 1;
     clientHandlerThreads.clear();
+    clientHandlers.clear();
 }
 
-void GameServer::startThreadPool() {
-    while(true){
-        int clientSocket = getNextClientSocket();
-        if (clientHandlerThreads.size() < MAX_CONNECTIONS){
+void GameServer::startThreadPool()
+{
+    int clientSocket;
+    while ((clientSocket = getNextClientSocket()) != -1)
+    {
+        if (clientHandlerThreads.size() < MAX_CONNECTIONS)
+        {
             auto clientHandler = std::make_unique<ClientHandler>(*this, clientSocket);
-            
             clientHandlers.push_back(std::move(clientHandler));
             clientHandlerThreads.emplace_back(&ClientHandler::run, clientHandlers.back().get());
         }
         joinOnlyFinishedThreads();
-        grid_.printMatrix();
     }
+
+    std::cout << std::endl
+              << "No players joined after 20 seconds... session has finished!" << std::endl;
 }
-
-bool GameServer::allThreadsJoinable() {
-    for (auto& thread : clientHandlerThreads) {
-        if (!thread.joinable()) return false;
-    }
-    if (clientHandlerThreads.size() < 1) return false;
-    else return true;
-}
-
-

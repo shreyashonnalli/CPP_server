@@ -6,8 +6,14 @@
 
 int main(int argc, char *argv[])
 {
-    while(true){
-        GameServer server(5001, "/Users/shreyashonnalli/Desktop/flowtraders/output.txt");
+    if (argc < 3)
+    {
+        std::cerr << "Usage: " << argv[0] << " <port>"
+                  << " <fileLocation>" << std::endl;
     }
+
+    int port = std::stoi(argv[1]);
+    std::string fileLoc(argv[2]);
+    GameServer server(5001, fileLoc);
     return 0;
 }

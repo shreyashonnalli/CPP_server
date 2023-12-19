@@ -44,12 +44,6 @@ bool ClientHandler::sequenceNumberSynchronised(){
 void ClientHandler::proceedWithProtocol() {
     sequenceNumber = inputHandler.getSeqNum();
     
-    //new game has started
-    if (sequenceNumber < parentServer.getCurrentSequenceNumber()){
-        
-        return;
-    }
-    
     //wait for previous sequences to finish incase this has arrived earlier
     while(!sequenceNumberSynchronised()){}
     
@@ -85,7 +79,6 @@ void ClientHandler::closeSocket() {
 void ClientHandler::run() {
     while(readMessage() != -1)
         proceedWithProtocol();
-//    std::cout << "closing connection having seqNum " << sequenceNumber <<", from thread id " << std::this_thread::get_id() << std::endl;
     closeSocket();
     
     promise.set_value();

@@ -10,6 +10,7 @@ int main(int argc, char *argv[])
     {
         std::cerr << "Usage: " << argv[0] << " <port>"
                   << " <fileLocation>" << std::endl;
+        return -1;
     }
 
     int port = std::stoi(argv[1]);
